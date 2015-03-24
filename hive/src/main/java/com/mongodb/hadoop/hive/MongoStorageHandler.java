@@ -48,7 +48,7 @@ public class MongoStorageHandler extends DefaultStorageHandler {
     public static final String MONGO_URI = "mongo.uri";
     // get location of where meta-data is stored about the mongo collection
     public static final String TABLE_LOCATION = "location";
-
+    public static final String HOST_STRING = "hosts";
     @Override
     public Class<? extends InputFormat<?, ?>> getInputFormatClass() {
         return HiveMongoInputFormat.class;
@@ -151,7 +151,10 @@ public class MongoStorageHandler extends DefaultStorageHandler {
         if (from.containsKey(TABLE_LOCATION)) {
             to.put(TABLE_LOCATION, (String) from.get(TABLE_LOCATION));
         }
-
+	if (from.containsKey(HOST_STRING)) {
+	    to.put(HOST_STRING, (String) from.get(HOST_STRING));
+	}
+	
         // Copy general connector properties, such as ones defined in
         // MongoConfigUtil. These are all prefixed with "mongo.".
         for (Entry<Object, Object> entry : from.entrySet()) {

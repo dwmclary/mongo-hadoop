@@ -43,6 +43,8 @@ import java.util.List;
  */
 public class HiveMongoInputFormat extends HiveInputFormat<BSONWritable, BSONWritable> {
 
+    private String[] hosts;
+    
     @Override
     public RecordReader<BSONWritable, BSONWritable> getRecordReader(final InputSplit split,
                                                                     final JobConf conf,
@@ -70,8 +72,10 @@ public class HiveMongoInputFormat extends HiveInputFormat<BSONWritable, BSONWrit
             // doesn't produce an error (Hive bug)
             FileSplit[] wrappers = new FileSplit[splitIns.length];
             Path path = new Path(conf.get(MongoStorageHandler.TABLE_LOCATION));
+	    LOG.info("HOST STRING FROM METASTORE" + (String) conf.get(MongoStorageHandler.HOST_STRING));
+	    String [] hosts = ((String) conf.get(MongoStorageHandler.HOST_STRING)).split(",");
             for (int i = 0; i < wrappers.length; i++) {
-                wrappers[i] = new MongoHiveInputSplit(splitIns[i], path);
+                wrappers[i] = new MongoHiveInputSplit(splitIns[i], path, hosts);
             }
 
             return wrappers;
@@ -93,6 +97,7 @@ public class HiveMongoInputFormat extends HiveInputFormat<BSONWritable, BSONWrit
     public static class MongoHiveInputSplit extends FileSplit {
         private InputSplit delegate;
         private Path path;
+	private String[] hosts;
 
         MongoHiveInputSplit() {
             this(new MongoInputSplit());
@@ -108,6 +113,14 @@ public class HiveMongoInputFormat extends HiveInputFormat<BSONWritable, BSONWrit
             this.path = path;
         }
 
+	MongoHiveInputSplit(final InputSplit delegate, final Path path, final String [] myHosts) {
+            super(path, 0, 0, (String[]) null);
+            this.delegate = delegate;
+            this.path = path;
+	    this.hosts = myHosts;
+        }
+
+
         public InputSplit getDelegate() {
             return delegate;
         }
@@ -116,6 +129,11 @@ public class HiveMongoInputFormat extends HiveInputFormat<BSONWritable, BSONWrit
         public long getLength() {
             return 1L;
         }
+
+	public String[] getLocations() {
+	    return this.hosts;
+	}
+
 
         @Override
         public void write(final DataOutput out) throws IOException {
